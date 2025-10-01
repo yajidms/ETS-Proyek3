@@ -15,15 +15,6 @@ Laravel is a web application framework with expressive, elegant syntax. We belie
  Akademik web app with Laravel 12, Bootstrap 5, PostgreSQL, JWT, and role-based access using spatie/laravel-permission.
 
  Setup
-
- - Copy .env.example to .env and ensure:
-	 - DB_CONNECTION=pgsql
-	 - DB_HOST=127.0.0.1
-	 - DB_PORT=5118
-	 - DB_DATABASE=akademik
-	 - DB_USERNAME=furina
-	 - DB_PASSWORD=furinacantik
-	 - JWT_SECRET=your-very-strong-secret
  - composer install
  - php artisan key:generate
  - php artisan migrate

@@ -66,19 +66,6 @@ frontend/  # Aplikasi Next.js 15 App Router sebagai dashboard admin & mahasiswa
    ```
    Aplikasi dapat diakses di `http://localhost:3000`.
 
-## Alur Integrasi
-
-- Frontend memakai route API Next.js (`/api/*`) sebagai proxy ke endpoint Laravel (`/api/login`, `/api/courses`, `/api/enrollments`, `/api/users`, dll.).
-- Middleware client-side memvalidasi token JWT yang disimpan dalam cookie `token` untuk mengarahkan pengguna sesuai peran (`admin` atau `student`).
-- Laravel memberikan data kursus, pendaftaran, dan profil pengguna dengan pengecekan role menggunakan `spatie/laravel-permission`.
-- CORS diaktifkan melalui `config/cors.php` sehingga permintaan lintas domain dari frontend dapat diterima.
-
-## Akun Contoh (setelah seeding)
-
-| Peran   | Email               | Password |
-|---------|---------------------|----------|
-| Admin   | furina@example.com  | furina   |
-| Student | hutao@example.com   | hutao    |
 
 ## Pengujian
 
