@@ -77,3 +77,4 @@ frontend/  # Aplikasi Next.js 15 App Router sebagai dashboard admin & mahasiswa
 - Jika frontend dan backend dijalankan di host/port berbeda, pastikan `FRONTEND_URL` pada Laravel dan `BACKEND_URL` pada Next.js disesuaikan.
 - Token JWT memiliki masa berlaku 1 jam; frontend otomatis membersihkan cookie ketika token kedaluwarsa.
 - Endpoint admin (`/api/courses`, `/api/users`) membutuhkan peran `admin`, sedangkan `/api/enrollments` hanya dapat diakses oleh peran `student`.
+ 
