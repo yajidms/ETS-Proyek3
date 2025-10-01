@@ -43,6 +43,7 @@ class GajiDprSeeder extends Seeder
                 'gelar_belakang' => 'S.Sos.',
                 'jabatan' => 'Ketua',
                 'status_pernikahan' => 'Kawin',
+                'jumlah_anak' => 2,
             ],
             [
                 'id_anggota' => 102,
@@ -52,6 +53,7 @@ class GajiDprSeeder extends Seeder
                 'gelar_belakang' => null,
                 'jabatan' => 'Wakil Ketua',
                 'status_pernikahan' => 'Kawin',
+                'jumlah_anak' => 3,
             ],
             [
                 'id_anggota' => 103,
@@ -61,6 +63,7 @@ class GajiDprSeeder extends Seeder
                 'gelar_belakang' => 'S.S., M.Sc.',
                 'jabatan' => 'Anggota',
                 'status_pernikahan' => 'Kawin',
+                'jumlah_anak' => 1,
             ],
             [
                 'id_anggota' => 104,
@@ -70,6 +73,7 @@ class GajiDprSeeder extends Seeder
                 'gelar_belakang' => 'S.H., M.H.',
                 'jabatan' => 'Wakil Ketua',
                 'status_pernikahan' => 'Kawin',
+                'jumlah_anak' => 2,
             ],
             [
                 'id_anggota' => 105,
@@ -79,6 +83,7 @@ class GajiDprSeeder extends Seeder
                 'gelar_belakang' => null,
                 'jabatan' => 'Anggota',
                 'status_pernikahan' => 'Kawin',
+                'jumlah_anak' => 4,
             ],
             [
                 'id_anggota' => 106,
@@ -88,6 +93,7 @@ class GajiDprSeeder extends Seeder
                 'gelar_belakang' => null,
                 'jabatan' => 'Anggota',
                 'status_pernikahan' => 'Belum Kawin',
+                'jumlah_anak' => 0,
             ],
         ]);
 

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -23,7 +24,7 @@ export default function AdminPage() {
       return;
     }
 
-    setStatus('Selamat datang, Admin. Fitur dashboard akan segera hadir.');
+    setStatus('Selamat datang, Admin. Kelola data anggota melalui tombol di bawah.');
   }, [router]);
 
   return (
@@ -31,6 +32,9 @@ export default function AdminPage() {
       <div className="card">
         <h1 className="card__title">Dashboard Admin</h1>
         <p>{status}</p>
+        <Link className="form__button" href="/admin/anggota">
+          Kelola Anggota DPR
+        </Link>
       </div>
     </div>
   );

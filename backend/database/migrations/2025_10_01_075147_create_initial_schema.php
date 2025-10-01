@@ -11,12 +11,29 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("CREATE TYPE role_pengguna AS ENUM ('Admin', 'Public')");
-        DB::statement("CREATE TYPE jabatan_anggota AS ENUM ('Ketua', 'Wakil Ketua', 'Anggota')");
-        DB::statement("CREATE TYPE status_pernikahan AS ENUM ('Kawin', 'Belum Kawin', 'Cerai Hidup', 'Cerai Mati')");
-        DB::statement("CREATE TYPE kategori_komponen AS ENUM ('Gaji Pokok', 'Tunjangan Melekat', 'Tunjangan Lain')");
-        DB::statement("CREATE TYPE jabatan_komponen AS ENUM ('Ketua', 'Wakil Ketua', 'Anggota', 'Semua')");
-        DB::statement("CREATE TYPE satuan_komponen AS ENUM ('Bulan', 'Hari', 'Periode')");
+        if (! $this->typeExists('role_pengguna')) {
+            DB::statement("CREATE TYPE role_pengguna AS ENUM ('Admin', 'Public')");
+        }
+
+        if (! $this->typeExists('jabatan_anggota')) {
+            DB::statement("CREATE TYPE jabatan_anggota AS ENUM ('Ketua', 'Wakil Ketua', 'Anggota')");
+        }
+
+        if (! $this->typeExists('status_pernikahan')) {
+            DB::statement("CREATE TYPE status_pernikahan AS ENUM ('Kawin', 'Belum Kawin', 'Cerai Hidup', 'Cerai Mati')");
+        }
+
+        if (! $this->typeExists('kategori_komponen')) {
+            DB::statement("CREATE TYPE kategori_komponen AS ENUM ('Gaji Pokok', 'Tunjangan Melekat', 'Tunjangan Lain')");
+        }
+
+        if (! $this->typeExists('jabatan_komponen')) {
+            DB::statement("CREATE TYPE jabatan_komponen AS ENUM ('Ketua', 'Wakil Ketua', 'Anggota', 'Semua')");
+        }
+
+        if (! $this->typeExists('satuan_komponen')) {
+            DB::statement("CREATE TYPE satuan_komponen AS ENUM ('Bulan', 'Hari', 'Periode')");
+        }
 
         DB::statement(<<<'SQL'
             CREATE TABLE pengguna (
@@ -82,5 +99,12 @@ return new class extends Migration
         DB::statement('DROP TYPE IF EXISTS status_pernikahan');
         DB::statement('DROP TYPE IF EXISTS jabatan_anggota');
         DB::statement('DROP TYPE IF EXISTS role_pengguna');
+    }
+    private function typeExists(string $type): bool
+    {
+        return DB::selectOne(
+            "SELECT 1 FROM pg_type WHERE typname = ?",
+            [$type]
+        ) !== null;
     }
 };

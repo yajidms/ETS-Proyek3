@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
+use App\Models\Pengguna;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class ApiAuthTest extends TestCase
@@ -13,28 +13,48 @@ class ApiAuthTest extends TestCase
 
     public function test_login_returns_token_and_roles(): void
     {
-        $adminRole = Role::create(['name' => 'admin']);
-
-        $user = User::factory()->create([
-            'email' => 'admin@example.com',
-            'password' => 'secret-password',
+        config([
+            'services.jwt.secret' => 'test-secret',
+            'services.jwt.ttl' => 3600,
         ]);
-        $user->assignRole($adminRole);
+
+        Pengguna::create([
+            'id_pengguna' => 999,
+            'username' => 'admin-test',
+            'password' => Hash::make('password-secret'),
+            'email' => 'admin@example.com',
+            'nama_depan' => 'Admin',
+            'nama_belakang' => 'Tester',
+            'role' => 'Admin',
+        ]);
 
         $response = $this->postJson('/api/login', [
-            'email' => 'admin@example.com',
-            'password' => 'secret-password',
+            'username' => 'admin-test',
+            'password' => 'password-secret',
         ]);
 
         $response
             ->assertOk()
             ->assertJsonStructure([
                 'token',
+                'token_type',
                 'expires_in',
-                'roles',
+                'user' => [
+                    'id',
+                    'username',
+                    'role',
+                    'nama_depan',
+                    'nama_belakang',
+                ],
             ])
             ->assertJsonFragment([
-                'roles' => ['admin'],
+                'user' => [
+                    'id' => 999,
+                    'username' => 'admin-test',
+                    'role' => 'Admin',
+                    'nama_depan' => 'Admin',
+                    'nama_belakang' => 'Tester',
+                ],
             ]);
     }
 }

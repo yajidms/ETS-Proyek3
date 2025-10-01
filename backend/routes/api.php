@@ -23,6 +23,6 @@ Route::middleware(['jwt'])->group(function () {
     });
 
     Route::middleware(['role:Admin'])->prefix('admin')->group(function () {
-        Route::get('/anggota', [AnggotaController::class, 'index']);
+        Route::apiResource('anggota', AnggotaController::class);
     });
 });

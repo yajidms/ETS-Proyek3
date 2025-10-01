@@ -20,6 +20,7 @@ class Pengguna extends Model
     public $timestamps = false;
 
     protected $fillable = [
+        'id_pengguna',
         'username',
         'password',
         'email',
