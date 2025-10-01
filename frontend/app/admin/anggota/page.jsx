@@ -43,6 +43,10 @@ export default function AnggotaPage() {
   const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
 
   const authHeaders = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return null;
+    }
+
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) {
       return null;
