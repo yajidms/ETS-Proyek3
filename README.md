@@ -1,4 +1,4 @@
-# ETS Proyek – Akademik Platform
+# ETS Proyek – DATA DPR
 
 Kombinasi backend Laravel (folder `backend/`) dan frontend Next.js (folder `frontend/`) untuk sistem informasi akademik sederhana. Backend menyediakan autentikasi JWT, manajemen mata kuliah, dan data pendaftaran mahasiswa. Frontend menangani antarmuka web modern berbasis React/Next.js dan berkomunikasi dengan backend melalui API terproteksi.
 
