@@ -84,9 +84,3 @@ Akses antarmuka di `http://localhost:3000`.
 - Token JWT otomatis disimpan di frontend (localStorage) dan dibersihkan jika kedaluwarsa.
 - Endpoint admin berada di `/api/admin/...` dan dilindungi middleware `jwt` + `role:Admin`.
 - Untuk memuat dataset SQL eksternal (misal `proyek3-data-instance-gaji-dpr.sql`) ke PostgreSQL, jalankan perintah berikut:
-
-	```powershell
-	psql -h <DB_HOST> -U <DB_USER> -d <DB_NAME> -f d:\Downloads\Compressed\proyek3-data-instance-gaji-dpr.sql
-	```
-
-	Setelah import, jalankan `php artisan cache:clear` bila diperlukan untuk menyegarkan cache konfigurasi.
