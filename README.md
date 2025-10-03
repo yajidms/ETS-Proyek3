@@ -14,6 +14,7 @@ frontend/  # Next.js 15 (JavaScript) untuk dashboard admin & portal publik
 - **Autentikasi JWT** dengan login menggunakan username atau email, logout, dan blacklist token.
 - **Manajemen Anggota DPR**: CRUD penuh, pencarian multi-kolom (ID, nama depan, nama belakang, jabatan), filter jabatan, dan agregasi total kompensasi per anggota.
 - **Manajemen Komponen Gaji/Tunjangan**: CRUD penuh, validasi enum (kategori/jabatan/satuan), pencarian lintas kolom termasuk nominal, serta pembersihan relasi penggajian saat hapus.
+- **Manajemen Penggajian**: Validasi jabatan-komponen, deteksi duplikasi, kalkulasi otomatis Take Home Pay (Tunjangan Pasangan & Anak), pencarian multi kolom hingga nominal THP, dan ringkasan detail komponen per anggota.
 - **Portal Admin (Next.js)**: tabel dinamis, form tambah/ubah, konfirmasi hapus, filter & pagination dengan fetch API.
 - **Portal Publik**: pengguna non-admin dapat melihat profilnya via endpoint `/api/me`.
 
@@ -82,4 +83,10 @@ Akses antarmuka di `http://localhost:3000`.
 - Jalankan `php artisan migrate:fresh --seed` kapan pun ingin reset data contoh.
 - Token JWT otomatis disimpan di frontend (localStorage) dan dibersihkan jika kedaluwarsa.
 - Endpoint admin berada di `/api/admin/...` dan dilindungi middleware `jwt` + `role:Admin`.
- 
+- Untuk memuat dataset SQL eksternal (misal `proyek3-data-instance-gaji-dpr.sql`) ke PostgreSQL, jalankan perintah berikut:
+
+	```powershell
+	psql -h <DB_HOST> -U <DB_USER> -d <DB_NAME> -f d:\Downloads\Compressed\proyek3-data-instance-gaji-dpr.sql
+	```
+
+	Setelah import, jalankan `php artisan cache:clear` bila diperlukan untuk menyegarkan cache konfigurasi.

@@ -374,3 +374,133 @@ body {
   font-size: 0.95rem;
   color: #1f2937;
 }
+
+.alert {
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.alert--error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #b91c1c;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.form__fieldset {
+  border: 1px dashed rgba(148, 163, 184, 0.6);
+  border-radius: 14px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.form__legend {
+  padding: 0 0.5rem;
+  font-weight: 600;
+  color: #1f3a8a;
+}
+
+.form__hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.form__checkbox-group {
+  display: grid;
+  gap: 0.65rem;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.form__checkbox {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background-color: #ffffff;
+}
+
+.form__checkbox strong {
+  display: block;
+  color: #1f2937;
+}
+
+.form__checkbox small {
+  display: block;
+  color: #64748b;
+}
+
+.card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.table__title {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #1f3a8a;
+}
+
+.table__subtitle {
+  margin: 1.5rem 0 0.75rem;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.table__loading,
+.table__empty {
+  text-align: center;
+  padding: 1.5rem;
+  color: #64748b;
+}
+
+.table--compact {
+  min-width: 100%;
+}
+
+.table--compact th,
+.table--compact td {
+  padding: 0.6rem 0.75rem;
+  font-size: 0.9rem;
+}
+
+.summary-grid {
+  margin: 1.5rem 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.85rem;
+}
+
+.summary-card {
+  background: #f1f5f9;
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.summary-card span {
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.summary-card strong {
+  font-size: 1.05rem;
+  color: #1f2937;
+}
+
+.summary-card--accent {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.2));
+  border-color: rgba(59, 130, 246, 0.3);
+}

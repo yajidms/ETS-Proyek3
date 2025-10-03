@@ -39,6 +39,9 @@ export default function AdminPage() {
           <Link className="form__button" href="/admin/komponen-gaji">
             Kelola Komponen Gaji
           </Link>
+          <Link className="form__button" href="/admin/penggajian">
+            Kelola Penggajian
+          </Link>
         </div>
       </div>
     </div>
