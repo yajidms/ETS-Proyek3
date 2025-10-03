@@ -43,6 +43,10 @@ body {
   gap: 1.5rem;
 }
 
+.card--wide {
+  width: 100%;
+}
+
 .card--login {
   animation: float-in 420ms ease-out;
 }

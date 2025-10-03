@@ -475,7 +475,7 @@ export default function PenggajianPage() {
 
       {detail && (
         <section className="admin__section">
-          <div className="card">
+          <div className="card card--wide">
             <div className="card__header">
               <h2 className="card__title">Detail Penggajian Anggota #{detail.anggota.id_anggota}</h2>
               <button
