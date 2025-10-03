@@ -1,80 +1,85 @@
 # ETS Proyek – DATA DPR
 
-Kombinasi backend Laravel (folder `backend/`) dan frontend Next.js (folder `frontend/`) untuk sistem informasi akademik sederhana. Backend menyediakan autentikasi JWT, manajemen mata kuliah, dan data pendaftaran mahasiswa. Frontend menangani antarmuka web modern berbasis React/Next.js dan berkomunikasi dengan backend melalui API terproteksi.
+Aplikasi internal untuk mengelola data anggota DPR beserta rincian komponen gaji. Proyek terdiri dari backend Laravel (JWT + PostgreSQL) dan frontend Next.js 15 (App Router) yang bekerja sebagai portal admin dan publik.
 
 ## Struktur Folder
 
 ```
-backend/   # Aplikasi Laravel 12 + PostgreSQL + JWT + spatie/permission
-frontend/  # Aplikasi Next.js 15 App Router sebagai dashboard admin & mahasiswa
+backend/   # Laravel 12 + PostgreSQL + JWT + middleware custom role
+frontend/  # Next.js 15 (JavaScript) untuk dashboard admin & portal publik
 ```
+
+## Fitur Utama
+
+- **Autentikasi JWT** dengan login menggunakan username atau email, logout, dan blacklist token.
+- **Manajemen Anggota DPR**: CRUD penuh, pencarian multi-kolom (ID, nama depan, nama belakang, jabatan), filter jabatan, dan agregasi total kompensasi per anggota.
+- **Manajemen Komponen Gaji/Tunjangan**: CRUD penuh, validasi enum (kategori/jabatan/satuan), pencarian lintas kolom termasuk nominal, serta pembersihan relasi penggajian saat hapus.
+- **Portal Admin (Next.js)**: tabel dinamis, form tambah/ubah, konfirmasi hapus, filter & pagination dengan fetch API.
+- **Portal Publik**: pengguna non-admin dapat melihat profilnya via endpoint `/api/me`.
 
 ## Prasyarat
 
-- PHP 8.2+ dengan Composer
+- PHP 8.2+ dan Composer
 - Node.js 18+ dan npm
-- PostgreSQL (atau sesuaikan koneksi di `.env` Laravel)
-- PowerShell (instruksi perintah di bawah sesuai dengan PowerShell standar Windows)
+- PostgreSQL (atau sesuaikan konfigurasi `.env` Laravel)
+- PowerShell (instruksi terminal di bawah ditulis untuk Windows)
 
 ## Konfigurasi Backend (Laravel)
 
-1. Masuk ke folder backend dan pasang dependensi:
-   ```powershell
-   cd d:\mission\ets-proyek\backend
-   composer install
-   npm install
-   ```
+```powershell
+cd d:\mission\ets-proyek1\backend
+composer install
+copy .env.example .env
+```
 
-2. Salin file environment dan isi variabel penting:
-   ```powershell
-   copy .env.example .env
-   ```
-   Perbarui nilai berikut agar sesuai dengan server basis data lokal:
-   - `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
-   - `JWT_SECRET` (gunakan kunci acak yang kuat)
-   - `FRONTEND_URL` (default `http://localhost:3000`)
+Ubah variabel berikut pada `.env`:
 
-3. Jalankan key generate, migrasi, dan seeder agar akun contoh tersedia:
-   ```powershell
-   php artisan key:generate
-   php artisan migrate --seed
-   ```
+- `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`
+- `JWT_SECRET` (gunakan nilai acak, bisa dengan `php artisan jwt:secret` atau `php -r "echo bin2hex(random_bytes(32));"`)
+- `FRONTEND_URL` (default `http://localhost:3000`)
+- `APP_URL` bila ingin mengganti host backend
 
-4. Jalankan server pengembangan Laravel (dan Vite jika ingin mengakses Blade bawaan):
-   ```powershell
-   php artisan serve
-   ```
-   Secara default API berjalan di `http://127.0.0.1:8000`.
+Lanjutkan dengan inisialisasi aplikasi dan data contoh:
+
+```powershell
+php artisan key:generate
+php artisan migrate:fresh --seed
+php artisan serve --host=127.0.0.1 --port=8000
+```
+
+Akun awal:
+
+| Role   | Username | Email              | Password  |
+|--------|----------|-------------------|-----------|
+| Admin  | admin    | admin@example.com  | admin123  |
+| Public | public   | public@example.com | public123 |
 
 ## Konfigurasi Frontend (Next.js)
 
-1. Masuk ke folder frontend dan pasang dependensi:
-   ```powershell
-   cd d:\mission\ets-proyek\frontend
-   npm install
-   ```
+```powershell
+cd d:\mission\ets-proyek1\frontend
+npm install
+copy .env.example .env
+```
 
-2. Salin environment dan ubah URL backend jika perlu:
-   ```powershell
-   copy .env.example .env
-   ```
-   - `BACKEND_URL` harus menunjuk ke alamat Laravel (`http://127.0.0.1:8000`).
+- Set `NEXT_PUBLIC_API_URL` ke URL backend, contoh `http://127.0.0.1:8000`.
 
-3. Jalankan pengembangan Next.js:
-   ```powershell
-   npm run dev
-   ```
-   Aplikasi dapat diakses di `http://localhost:3000`.
+Jalankan pengembangan:
 
+```powershell
+npm run dev
+```
+
+Akses antarmuka di `http://localhost:3000`.
 
 ## Pengujian
 
-- Backend: jalankan `php artisan test` dari folder `backend/` untuk memastikan endpoint API berfungsi (terdapat uji fitur login JWT).
-- Frontend: jalankan `npm run lint` dari folder `frontend/` untuk memastikan kode TypeScript bersih.
+- Backend: `php artisan test` (meng-cover login, CRUD komponen gaji, dsb.)
+- Frontend: `npm run lint` (opsional, jika linting diaktifkan)
 
-## Catatan Tambahan
+## Tips & Catatan
 
-- Jika frontend dan backend dijalankan di host/port berbeda, pastikan `FRONTEND_URL` pada Laravel dan `BACKEND_URL` pada Next.js disesuaikan.
-- Token JWT memiliki masa berlaku 1 jam; frontend otomatis membersihkan cookie ketika token kedaluwarsa.
-- Endpoint admin (`/api/courses`, `/api/users`) membutuhkan peran `admin`, sedangkan `/api/enrollments` hanya dapat diakses oleh peran `student`.
+- Jalankan `php artisan migrate:fresh --seed` kapan pun ingin reset data contoh.
+- Token JWT otomatis disimpan di frontend (localStorage) dan dibersihkan jika kedaluwarsa.
+- Endpoint admin berada di `/api/admin/...` dan dilindungi middleware `jwt` + `role:Admin`.
  
