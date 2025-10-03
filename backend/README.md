@@ -12,34 +12,37 @@
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
 
 
- Akademik web app with Laravel 12, Bootstrap 5, PostgreSQL, JWT, and role-based access using spatie/laravel-permission.
+## Project overview
 
- Setup
- - composer install
- - php artisan key:generate
- - php artisan migrate
- - php artisan db:seed
- - npm install
- - npm run dev
- - php artisan serve
+Internal payroll portal built with Laravel 12, PostgreSQL, and JWT authentication. Admins manage legislative members plus their compensation components, while public users can only view their own profile data via the frontend client (Next.js 15).
 
- Default accounts
+## Setup
 
- - Admin: admin@example.com / password
- - Student: student@example.com / password
+```bash
+composer install
+php artisan key:generate
+php artisan migrate:fresh --seed
+npm install
+npm run dev
+php artisan serve
+```
 
- Features
+## Default accounts
 
- - Session login for Blade pages
- - Role-based routes and menus (admin, student)
- - Admin: CRUD courses, manage users (activate/deactivate, set role)
- - Student: view courses, enroll
- - API: POST /api/login => JWT HS256; GET /api/profile, /api/courses with Authorization: Bearer <token>
+| Role  | Username | Email               | Password  |
+|-------|----------|--------------------|-----------|
+| Admin | admin    | admin@example.com   | admin123  |
+| Public| public   | public@example.com  | public123 |
 
- Security
+Both username and email can be used interchangeably during login.
 
- - JWT decoding whitelists algorithm HS256 via firebase/php-jwt Key
- - Role middleware via spatie/laravel-permission
+## Features
+
+- JWT-based login/logout with token revocation and role enforcement.
+- Admin dashboard: CRUD anggota DPR, pagination + search + filtering with aggregate totals.
+- Admin dashboard: CRUD komponen gaji & tunjangan lengkap dengan pencarian, filter kategori/jabatan/satuan.
+- Public view: profil pribadi yang ditarik dari endpoint `/api/me`.
+- REST API secured by custom JWT middleware and role checks.
 
 ## Learning Laravel
 

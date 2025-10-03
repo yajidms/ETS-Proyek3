@@ -4,19 +4,19 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 const TOKEN_KEY = 'jwt_token';
-const JABATAN_OPTIONS = ['Ketua', 'Wakil Ketua', 'Anggota'];
-const STATUS_PERNIKAHAN_OPTIONS = ['Kawin', 'Belum Kawin', 'Cerai Hidup', 'Cerai Mati'];
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
+const KATEGORI_OPTIONS = ['Gaji Pokok', 'Tunjangan Melekat', 'Tunjangan Lain'];
+const JABATAN_OPTIONS = ['Ketua', 'Wakil Ketua', 'Anggota', 'Semua'];
+const SATUAN_OPTIONS = ['Bulan', 'Hari', 'Periode'];
 const DEFAULT_PER_PAGE = 10;
 
 const emptyForm = {
-  id_anggota: '',
-  nama_depan: '',
-  nama_belakang: '',
-  gelar_depan: '',
-  gelar_belakang: '',
-  jabatan: 'Anggota',
-  status_pernikahan: 'Kawin',
-  jumlah_anak: 0,
+  id_komponen_gaji: '',
+  nama_komponen: '',
+  kategori: 'Gaji Pokok',
+  jabatan: 'Semua',
+  nominal: '',
+  satuan: 'Bulan',
 };
 
 function formatCurrency(value) {
@@ -28,7 +28,7 @@ function formatCurrency(value) {
   }).format(number);
 }
 
-export default function AnggotaPage() {
+export default function KomponenGajiPage() {
   const router = useRouter();
   const [tokenChecked, setTokenChecked] = useState(false);
   const [items, setItems] = useState([]);
@@ -39,7 +39,9 @@ export default function AnggotaPage() {
   const [formData, setFormData] = useState(emptyForm);
   const [isEditing, setIsEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [kategoriFilter, setKategoriFilter] = useState('');
   const [jabatanFilter, setJabatanFilter] = useState('');
+  const [satuanFilter, setSatuanFilter] = useState('');
   const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
 
   const authHeaders = useMemo(() => {
@@ -78,7 +80,7 @@ export default function AnggotaPage() {
     if (!tokenChecked) return;
     loadData(1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tokenChecked, perPage, jabatanFilter]);
+  }, [tokenChecked, perPage, kategoriFilter, jabatanFilter, satuanFilter]);
 
   async function loadData(page = 1, keyword = searchTerm) {
     if (!authHeaders) return;
@@ -93,16 +95,22 @@ export default function AnggotaPage() {
       if (keyword.trim() !== '') {
         params.set('search', keyword.trim());
       }
+      if (kategoriFilter) {
+        params.set('kategori', kategoriFilter);
+      }
       if (jabatanFilter) {
         params.set('jabatan', jabatanFilter);
       }
+      if (satuanFilter) {
+        params.set('satuan', satuanFilter);
+      }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/anggota?${params.toString()}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/komponen-gaji?${params.toString()}`, {
         headers: authHeaders,
       });
 
       if (!response.ok) {
-        throw new Error(`Gagal memuat data anggota (${response.status})`);
+        throw new Error(`Gagal memuat data komponen gaji (${response.status})`);
       }
 
       const json = await response.json();
@@ -118,17 +126,9 @@ export default function AnggotaPage() {
   function handleInputChange(event) {
     const { name, value } = event.target;
 
-    if (name === 'jumlah_anak') {
-      setFormData((prev) => ({
-        ...prev,
-        jumlah_anak: value === '' ? '' : Number(value),
-      }));
-      return;
-    }
-
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: name === 'nominal' ? value.replace(/[^0-9.,-]/g, '') : value,
     }));
   }
 
@@ -138,27 +138,28 @@ export default function AnggotaPage() {
     setFormErrors({});
   }
 
-  function validateForm(clientData, validateId = true) {
-    const { id_anggota, jumlah_anak, nama_depan, nama_belakang } = clientData;
+  function validateForm(validateId = true) {
     const errors = {};
+    const trimmedName = formData.nama_komponen.trim();
+    const nominalValue = String(formData.nominal).replace(/,/g, '.');
 
-    if (validateId && (!id_anggota || Number(id_anggota) <= 0)) {
-      errors.id_anggota = 'ID anggota wajib diisi dan harus lebih dari 0.';
+    if (validateId) {
+      const idValue = Number(formData.id_komponen_gaji);
+      if (!idValue || !Number.isInteger(idValue) || idValue <= 0) {
+        errors.id_komponen_gaji = 'ID komponen wajib diisi dan harus bilangan bulat positif.';
+      }
     }
 
-    if (!nama_depan.trim()) {
-      errors.nama_depan = 'Nama depan wajib diisi.';
+    if (!trimmedName) {
+      errors.nama_komponen = 'Nama komponen wajib diisi.';
     }
 
-    if (!nama_belakang.trim()) {
-      errors.nama_belakang = 'Nama belakang wajib diisi.';
+    const numericNominal = Number(nominalValue);
+    if (Number.isNaN(numericNominal) || numericNominal < 0) {
+      errors.nominal = 'Nominal wajib diisi dan tidak boleh negatif.';
     }
 
-    if (jumlah_anak === '' || Number.isNaN(Number(jumlah_anak)) || Number(jumlah_anak) < 0) {
-      errors.jumlah_anak = 'Jumlah anak wajib diisi dan tidak boleh negatif.';
-    }
-
-    return errors;
+    return { errors, nominal: Number.isNaN(numericNominal) ? 0 : numericNominal, trimmedName };
   }
 
   async function handleSubmit(event) {
@@ -166,31 +167,28 @@ export default function AnggotaPage() {
     setError('');
     setFormErrors({});
 
-    const validateId = !isEditing;
-    const errors = validateForm(formData, validateId);
+    const { errors, nominal, trimmedName } = validateForm(!isEditing);
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       return;
     }
 
     const payload = {
-      nama_depan: formData.nama_depan.trim(),
-      nama_belakang: formData.nama_belakang.trim(),
-      gelar_depan: formData.gelar_depan.trim() || null,
-      gelar_belakang: formData.gelar_belakang.trim() || null,
+      nama_komponen: trimmedName,
+      kategori: formData.kategori,
       jabatan: formData.jabatan,
-      status_pernikahan: formData.status_pernikahan,
-  jumlah_anak: Number(formData.jumlah_anak),
+      nominal,
+      satuan: formData.satuan,
     };
 
-    let url = `${process.env.NEXT_PUBLIC_API_URL}/api/admin/anggota`;
+    let url = `${API_BASE_URL}/api/admin/komponen-gaji`;
     let method = 'POST';
 
     if (isEditing) {
-      url = `${url}/${formData.id_anggota}`;
+      url = `${url}/${formData.id_komponen_gaji}`;
       method = 'PUT';
     } else {
-      payload.id_anggota = Number(formData.id_anggota);
+      payload.id_komponen_gaji = Number(formData.id_komponen_gaji);
     }
 
     try {
@@ -210,7 +208,8 @@ export default function AnggotaPage() {
         throw new Error(`Gagal menyimpan data (${response.status})`);
       }
 
-      await loadData(isEditing && meta ? meta.current_page : 1);
+      const targetPage = isEditing && meta ? meta.current_page : 1;
+      await loadData(targetPage);
       resetForm();
     } catch (err) {
       setError(err.message ?? 'Terjadi kesalahan saat menyimpan data');
@@ -219,26 +218,24 @@ export default function AnggotaPage() {
 
   function handleEdit(row) {
     setFormData({
-      id_anggota: row.id_anggota,
-      nama_depan: row.nama_depan ?? '',
-      nama_belakang: row.nama_belakang ?? '',
-      gelar_depan: row.gelar_depan ?? '',
-      gelar_belakang: row.gelar_belakang ?? '',
-      jabatan: row.jabatan ?? 'Anggota',
-      status_pernikahan: row.status_pernikahan ?? 'Kawin',
-      jumlah_anak: row.jumlah_anak ?? 0,
+      id_komponen_gaji: row.id_komponen_gaji,
+      nama_komponen: row.nama_komponen ?? '',
+      kategori: row.kategori ?? 'Gaji Pokok',
+      jabatan: row.jabatan ?? 'Semua',
+      nominal: row.nominal ?? '',
+      satuan: row.satuan ?? 'Bulan',
     });
     setIsEditing(true);
     setFormErrors({});
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('Hapus data anggota ini?')) {
+    if (!window.confirm('Hapus komponen gaji ini?')) {
       return;
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/anggota/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/admin/komponen-gaji/${id}`, {
         method: 'DELETE',
         headers: authHeaders,
       });
@@ -276,8 +273,8 @@ export default function AnggotaPage() {
     <div className="admin">
       <header className="admin__header">
         <div>
-          <h1 className="admin__title">Manajemen Anggota DPR</h1>
-          <p className="admin__subtitle">Tambah, ubah, cari, dan hapus data anggota secara real-time.</p>
+          <h1 className="admin__title">Manajemen Komponen Gaji &amp; Tunjangan</h1>
+          <p className="admin__subtitle">Kelola struktur kompensasi DPR dengan cepat dan aman.</p>
         </div>
         <div className="admin__actions">
           <button
@@ -310,10 +307,26 @@ export default function AnggotaPage() {
               id="search"
               name="search"
               className="filter__input"
-              placeholder="Cari nama, jabatan, atau ID anggota"
+              placeholder="Cari nama, kategori, jabatan, atau ID"
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
             />
+          </div>
+
+          <div className="filter__group">
+            <label className="filter__label" htmlFor="kategori">Kategori</label>
+            <select
+              id="kategori"
+              name="kategori"
+              className="filter__input"
+              value={kategoriFilter}
+              onChange={(event) => setKategoriFilter(event.target.value)}
+            >
+              <option value="">Semua</option>
+              {KATEGORI_OPTIONS.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
           </div>
 
           <div className="filter__group">
@@ -327,6 +340,22 @@ export default function AnggotaPage() {
             >
               <option value="">Semua</option>
               {JABATAN_OPTIONS.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="filter__group">
+            <label className="filter__label" htmlFor="satuan">Satuan</label>
+            <select
+              id="satuan"
+              name="satuan"
+              className="filter__input"
+              value={satuanFilter}
+              onChange={(event) => setSatuanFilter(event.target.value)}
+            >
+              <option value="">Semua</option>
+              {SATUAN_OPTIONS.map((option) => (
                 <option key={option} value={option}>{option}</option>
               ))}
             </select>
@@ -355,71 +384,53 @@ export default function AnggotaPage() {
 
       <section className="admin__section admin__section--grid">
         <form className="form form--pane" onSubmit={handleSubmit}>
-          <h2 className="form__title">{isEditing ? 'Ubah Data Anggota' : 'Tambah Anggota Baru'}</h2>
+          <h2 className="form__title">{isEditing ? 'Ubah Komponen' : 'Tambah Komponen Baru'}</h2>
 
           {!isEditing && (
-            <label className="form__label" htmlFor="id_anggota">
-              ID Anggota
+            <label className="form__label" htmlFor="id_komponen_gaji">
+              ID Komponen
               <input
-                id="id_anggota"
-                name="id_anggota"
+                id="id_komponen_gaji"
+                name="id_komponen_gaji"
                 className="form__input"
                 type="number"
                 min="1"
-                value={formData.id_anggota}
+                value={formData.id_komponen_gaji}
                 onChange={handleInputChange}
                 required
               />
-              {formErrors.id_anggota && <span className="form__error">{formErrors.id_anggota}</span>}
+              {formErrors.id_komponen_gaji && <span className="form__error">{formErrors.id_komponen_gaji}</span>}
             </label>
           )}
 
-          <label className="form__label" htmlFor="nama_depan">
-            Nama Depan
+          <label className="form__label" htmlFor="nama_komponen">
+            Nama Komponen
             <input
-              id="nama_depan"
-              name="nama_depan"
+              id="nama_komponen"
+              name="nama_komponen"
               className="form__input"
-              value={formData.nama_depan}
+              value={formData.nama_komponen}
               onChange={handleInputChange}
               required
             />
-            {formErrors.nama_depan && <span className="form__error">{formErrors.nama_depan}</span>}
+            {formErrors.nama_komponen && <span className="form__error">{formErrors.nama_komponen}</span>}
           </label>
 
-          <label className="form__label" htmlFor="nama_belakang">
-            Nama Belakang
-            <input
-              id="nama_belakang"
-              name="nama_belakang"
+          <label className="form__label" htmlFor="kategoriInput">
+            Kategori
+            <select
+              id="kategoriInput"
+              name="kategori"
               className="form__input"
-              value={formData.nama_belakang}
+              value={formData.kategori}
               onChange={handleInputChange}
               required
-            />
-            {formErrors.nama_belakang && <span className="form__error">{formErrors.nama_belakang}</span>}
-          </label>
-
-          <label className="form__label" htmlFor="gelar_depan">
-            Gelar Depan
-            <input
-              id="gelar_depan"
-              name="gelar_depan"
-              className="form__input"
-              value={formData.gelar_depan}
-              onChange={handleInputChange}
-            />
-          </label>
-
-          <label className="form__label" htmlFor="gelar_belakang">
-            Gelar Belakang
-            <input
-              id="gelar_belakang"
-              name="gelar_belakang"
-              className="form__input"
-              value={formData.gelar_belakang}
-              onChange={handleInputChange}
-            />
+            >
+              {KATEGORI_OPTIONS.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+            {formErrors.kategori && <span className="form__error">{formErrors.kategori}</span>}
           </label>
 
           <label className="form__label" htmlFor="jabatanInput">
@@ -439,43 +450,44 @@ export default function AnggotaPage() {
             {formErrors.jabatan && <span className="form__error">{formErrors.jabatan}</span>}
           </label>
 
-          <label className="form__label" htmlFor="status_pernikahan">
-            Status Pernikahan
-            <select
-              id="status_pernikahan"
-              name="status_pernikahan"
-              className="form__input"
-              value={formData.status_pernikahan}
-              onChange={handleInputChange}
-              required
-            >
-              {STATUS_PERNIKAHAN_OPTIONS.map((option) => (
-                <option key={option} value={option}>{option}</option>
-              ))}
-            </select>
-            {formErrors.status_pernikahan && <span className="form__error">{formErrors.status_pernikahan}</span>}
-          </label>
-
-          <label className="form__label" htmlFor="jumlah_anak">
-            Jumlah Anak
+          <label className="form__label" htmlFor="nominal">
+            Nominal (IDR)
             <input
-              id="jumlah_anak"
-              name="jumlah_anak"
+              id="nominal"
+              name="nominal"
               className="form__input"
               type="number"
               min="0"
-              value={formData.jumlah_anak}
+              step="0.01"
+              value={formData.nominal}
               onChange={handleInputChange}
               required
             />
-            {formErrors.jumlah_anak && <span className="form__error">{formErrors.jumlah_anak}</span>}
+            {formErrors.nominal && <span className="form__error">{formErrors.nominal}</span>}
+          </label>
+
+          <label className="form__label" htmlFor="satuan">
+            Satuan
+            <select
+              id="satuan"
+              name="satuan"
+              className="form__input"
+              value={formData.satuan}
+              onChange={handleInputChange}
+              required
+            >
+              {SATUAN_OPTIONS.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
+            {formErrors.satuan && <span className="form__error">{formErrors.satuan}</span>}
           </label>
 
           {error && <p className="form__error">{error}</p>}
 
           <div className="form__actions">
             <button type="submit" className="button button--primary">
-              {isEditing ? 'Simpan Perubahan' : 'Tambah Anggota'}
+              {isEditing ? 'Simpan Perubahan' : 'Tambah Komponen'}
             </button>
             {isEditing && (
               <button type="button" className="button button--ghost" onClick={resetForm}>
@@ -487,11 +499,11 @@ export default function AnggotaPage() {
 
         <div className="table-wrapper">
           <div className="table-header">
-            <h2 className="table-title">Daftar Anggota</h2>
+            <h2 className="table-title">Daftar Komponen</h2>
             {loading && <span className="table-status">Memuat…</span>}
             {!loading && meta && (
               <span className="table-status">
-                Menampilkan {items.length} dari total {meta.total} anggota
+                Menampilkan {items.length} dari total {meta.total} komponen
               </span>
             )}
           </div>
@@ -501,11 +513,11 @@ export default function AnggotaPage() {
               <thead>
                 <tr>
                   <th>ID</th>
-                  <th>Nama</th>
+                  <th>Nama Komponen</th>
+                  <th>Kategori</th>
                   <th>Jabatan</th>
-                  <th>Status</th>
-                  <th>Jumlah Anak</th>
-                  <th>Total Kompensasi</th>
+                  <th>Nominal</th>
+                  <th>Satuan</th>
                   <th>Aksi</th>
                 </tr>
               </thead>
@@ -516,20 +528,13 @@ export default function AnggotaPage() {
                   </tr>
                 )}
                 {items.map((row) => (
-                  <tr key={row.id_anggota}>
-                    <td>{row.id_anggota}</td>
-                    <td>
-                      <div className="table-name">
-                        <span className="table-name__primary">{`${row.nama_depan} ${row.nama_belakang}`}</span>
-                        {(row.gelar_depan || row.gelar_belakang) && (
-                          <span className="table-name__secondary">{`${row.gelar_depan ?? ''} ${row.gelar_belakang ?? ''}`.trim()}</span>
-                        )}
-                      </div>
-                    </td>
+                  <tr key={row.id_komponen_gaji}>
+                    <td>{row.id_komponen_gaji}</td>
+                    <td>{row.nama_komponen}</td>
+                    <td>{row.kategori}</td>
                     <td>{row.jabatan}</td>
-                    <td>{row.status_pernikahan}</td>
-                    <td>{row.jumlah_anak}</td>
-                    <td>{formatCurrency(row.total_nominal)}</td>
+                    <td>{formatCurrency(row.nominal)}</td>
+                    <td>{row.satuan}</td>
                     <td>
                       <div className="table-actions">
                         <button type="button" className="button button--small" onClick={() => handleEdit(row)}>
@@ -538,7 +543,7 @@ export default function AnggotaPage() {
                         <button
                           type="button"
                           className="button button--small button--danger"
-                          onClick={() => handleDelete(row.id_anggota)}
+                          onClick={() => handleDelete(row.id_komponen_gaji)}
                         >
                           Hapus
                         </button>

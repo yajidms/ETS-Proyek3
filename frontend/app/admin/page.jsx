@@ -32,9 +32,14 @@ export default function AdminPage() {
       <div className="card">
         <h1 className="card__title">Dashboard Admin</h1>
         <p>{status}</p>
-        <Link className="form__button" href="/admin/anggota">
-          Kelola Anggota DPR
-        </Link>
+        <div className="admin__nav">
+          <Link className="form__button" href="/admin/anggota">
+            Kelola Anggota DPR
+          </Link>
+          <Link className="form__button" href="/admin/komponen-gaji">
+            Kelola Komponen Gaji
+          </Link>
+        </div>
       </div>
     </div>
   );

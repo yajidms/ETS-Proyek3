@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AnggotaController;
+use App\Http\Controllers\Admin\KomponenGajiController;
 use App\Http\Controllers\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -24,5 +25,6 @@ Route::middleware(['jwt'])->group(function () {
 
     Route::middleware(['role:Admin'])->prefix('admin')->group(function () {
         Route::apiResource('anggota', AnggotaController::class);
+        Route::apiResource('komponen-gaji', KomponenGajiController::class);
     });
 });

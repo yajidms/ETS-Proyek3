@@ -7,7 +7,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8000';
 const TOKEN_STORAGE_KEY = 'jwt_token';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,7 +22,7 @@ export default function LoginPage() {
       const response = await fetch(`${API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+  body: JSON.stringify({ username: identifier, password }),
       });
 
       const data = await response.json();
@@ -46,7 +46,7 @@ export default function LoginPage() {
       if (data.user?.role === 'Admin') {
         router.push('/admin');
       } else {
-        router.push('/');
+        router.push('/public');
       }
     } catch (err) {
       setError(err.message ?? 'Terjadi kesalahan');
@@ -61,12 +61,13 @@ export default function LoginPage() {
         <h1 className="card__title">Masuk ke Portal DPR</h1>
         <form className="form" onSubmit={handleSubmit}>
           <label className="form__label" htmlFor="username">
-            Username
+            Username atau Email
             <input
               id="username"
               className="form__input"
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
+              value={identifier}
+              onChange={(event) => setIdentifier(event.target.value)}
+              placeholder="contoh: admin01 atau admin@example.com"
               autoComplete="username"
               required
             />
