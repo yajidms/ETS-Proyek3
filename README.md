@@ -66,9 +66,7 @@ Akun awal:
 ## Konfigurasi Frontend (Next.js)
 
 ```powershell
-cd d:\mission\ets-proyek1\frontend
 npm install
-copy .env.example .env
 ```
 
 - Set `NEXT_PUBLIC_API_URL` ke URL backend, contoh `http://127.0.0.1:8000`.
