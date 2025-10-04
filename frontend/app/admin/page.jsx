@@ -27,6 +27,13 @@ export default function AdminPage() {
     setStatus('Selamat datang, Admin. Kelola data anggota melalui tombol di bawah.');
   }, [router]);
 
+  function handleLogout() {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(`${TOKEN_STORAGE_KEY}_role`);
+    localStorage.removeItem(`${TOKEN_STORAGE_KEY}_exp`);
+    router.replace('/login');
+  }
+
   return (
     <div className="page page--centered">
       <div className="card">
@@ -42,6 +49,11 @@ export default function AdminPage() {
           <Link className="form__button" href="/admin/penggajian">
             Kelola Penggajian
           </Link>
+        </div>
+        <div className="admin__actions" style={{ marginTop: '0.75rem', justifyContent: 'flex-end' }}>
+          <button type="button" className="button button--ghost" onClick={handleLogout}>
+            Keluar
+          </button>
         </div>
       </div>
     </div>
