@@ -36,9 +36,7 @@ frontend/  # Next.js 15 (JavaScript) untuk dashboard admin & portal publik
 ## Konfigurasi Backend (Laravel)
 
 ```powershell
-cd d:\mission\ets-proyek1\backend
 composer install
-copy .env.example .env
 ```
 
 Ubah variabel berikut pada `.env`:
