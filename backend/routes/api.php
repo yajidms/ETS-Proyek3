@@ -36,5 +36,8 @@ Route::middleware(['jwt'])->group(function () {
         Route::get('penggajian', [PenggajianController::class, 'index']);
         Route::post('penggajian', [PenggajianController::class, 'store']);
         Route::get('penggajian/{id}', [PenggajianController::class, 'show']);
+        Route::put('penggajian/{id}', [PenggajianController::class, 'update']);
+        Route::delete('penggajian/{id}', [PenggajianController::class, 'destroy']);
+        Route::delete('penggajian/{id}/komponen/{komponenId}', [PenggajianController::class, 'destroyKomponen']);
     });
 });

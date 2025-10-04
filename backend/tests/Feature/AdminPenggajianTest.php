@@ -159,6 +159,76 @@ class AdminPenggajianTest extends TestCase
         ]);
     }
 
+    public function test_update_replaces_components_and_allows_removal(): void
+    {
+        $this->withoutMiddleware([JwtMiddleware::class, RoleMiddleware::class]);
+
+        $this->seedAllowances();
+
+        DB::table('anggota')->insert([
+            'id_anggota' => 35,
+            'nama_depan' => 'Maya',
+            'nama_belakang' => 'Pratama',
+            'jabatan' => 'Anggota',
+            'status_pernikahan' => 'Kawin',
+            'jumlah_anak' => 2,
+        ]);
+
+        DB::table('komponen_gaji')->insert([
+            [
+                'id_komponen_gaji' => 610,
+                'nama_komponen' => 'Gaji Pokok Anggota',
+                'kategori' => 'Gaji Pokok',
+                'jabatan' => 'Anggota',
+                'nominal' => 4200000,
+                'satuan' => 'Bulan',
+            ],
+            [
+                'id_komponen_gaji' => 611,
+                'nama_komponen' => 'Tunjangan Operasional',
+                'kategori' => 'Tunjangan Lain',
+                'jabatan' => 'Semua',
+                'nominal' => 1500000,
+                'satuan' => 'Bulan',
+            ],
+            [
+                'id_komponen_gaji' => 612,
+                'nama_komponen' => 'Tunjangan Reses',
+                'kategori' => 'Tunjangan Lain',
+                'jabatan' => 'Anggota',
+                'nominal' => 900000,
+                'satuan' => 'Bulan',
+            ],
+        ]);
+
+        DB::table('penggajian')->insert([
+            ['id_anggota' => 35, 'id_komponen_gaji' => 610],
+            ['id_anggota' => 35, 'id_komponen_gaji' => 611],
+        ]);
+
+        $replaceResponse = $this->putJson('/api/admin/penggajian/35', [
+            'komponen_gaji_ids' => [612],
+        ]);
+
+        $replaceResponse->assertOk()
+            ->assertJsonPath('summary.jumlah_komponen', 1)
+            ->assertJsonPath('komponen_gaji.0.id_komponen_gaji', 612);
+
+        $this->assertDatabaseMissing('penggajian', ['id_anggota' => 35, 'id_komponen_gaji' => 610]);
+        $this->assertDatabaseMissing('penggajian', ['id_anggota' => 35, 'id_komponen_gaji' => 611]);
+        $this->assertDatabaseHas('penggajian', ['id_anggota' => 35, 'id_komponen_gaji' => 612]);
+
+        $removeResponse = $this->putJson('/api/admin/penggajian/35', [
+            'komponen_gaji_ids' => [],
+        ]);
+
+        $removeResponse->assertOk()
+            ->assertJsonPath('summary.jumlah_komponen', 0)
+            ->assertJsonCount(0, 'komponen_gaji');
+
+        $this->assertEquals(0, DB::table('penggajian')->where('id_anggota', 35)->count());
+    }
+
     public function test_index_calculates_take_home_pay_for_various_cases(): void
     {
         $this->withoutMiddleware([JwtMiddleware::class, RoleMiddleware::class]);
@@ -291,6 +361,99 @@ class AdminPenggajianTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('summary.jumlah_komponen', 2)
             ->assertJsonCount(2, 'komponen_gaji');
+    }
+
+    public function test_destroy_removes_all_components_for_anggota(): void
+    {
+        $this->withoutMiddleware([JwtMiddleware::class, RoleMiddleware::class]);
+
+        DB::table('anggota')->insert([
+            'id_anggota' => 36,
+            'nama_depan' => 'Dedi',
+            'nama_belakang' => 'Prakoso',
+            'jabatan' => 'Anggota',
+            'status_pernikahan' => 'Belum Kawin',
+            'jumlah_anak' => 0,
+        ]);
+
+        DB::table('komponen_gaji')->insert([
+            [
+                'id_komponen_gaji' => 620,
+                'nama_komponen' => 'Gaji Pokok Anggota',
+                'kategori' => 'Gaji Pokok',
+                'jabatan' => 'Anggota',
+                'nominal' => 4200000,
+                'satuan' => 'Bulan',
+            ],
+            [
+                'id_komponen_gaji' => 621,
+                'nama_komponen' => 'Tunjangan Operasional',
+                'kategori' => 'Tunjangan Lain',
+                'jabatan' => 'Semua',
+                'nominal' => 1500000,
+                'satuan' => 'Bulan',
+            ],
+        ]);
+
+        DB::table('penggajian')->insert([
+            ['id_anggota' => 36, 'id_komponen_gaji' => 620],
+            ['id_anggota' => 36, 'id_komponen_gaji' => 621],
+        ]);
+
+        $response = $this->deleteJson('/api/admin/penggajian/36');
+
+        $response->assertNoContent();
+        $this->assertEquals(0, DB::table('penggajian')->where('id_anggota', 36)->count());
+    }
+
+    public function test_destroy_single_component_updates_payload(): void
+    {
+        $this->withoutMiddleware([JwtMiddleware::class, RoleMiddleware::class]);
+
+        $this->seedAllowances();
+
+        DB::table('anggota')->insert([
+            'id_anggota' => 37,
+            'nama_depan' => 'Hana',
+            'nama_belakang' => 'Wijaya',
+            'jabatan' => 'Anggota',
+            'status_pernikahan' => 'Kawin',
+            'jumlah_anak' => 1,
+        ]);
+
+        DB::table('komponen_gaji')->insert([
+            [
+                'id_komponen_gaji' => 630,
+                'nama_komponen' => 'Gaji Pokok Anggota',
+                'kategori' => 'Gaji Pokok',
+                'jabatan' => 'Anggota',
+                'nominal' => 4200000,
+                'satuan' => 'Bulan',
+            ],
+            [
+                'id_komponen_gaji' => 631,
+                'nama_komponen' => 'Tunjangan Komunikasi',
+                'kategori' => 'Tunjangan Lain',
+                'jabatan' => 'Semua',
+                'nominal' => 800000,
+                'satuan' => 'Bulan',
+            ],
+        ]);
+
+        DB::table('penggajian')->insert([
+            ['id_anggota' => 37, 'id_komponen_gaji' => 630],
+            ['id_anggota' => 37, 'id_komponen_gaji' => 631],
+        ]);
+
+        $response = $this->deleteJson('/api/admin/penggajian/37/komponen/631');
+
+        $response->assertOk()
+            ->assertJsonPath('summary.jumlah_komponen', 1)
+            ->assertJsonCount(1, 'komponen_gaji')
+            ->assertJsonPath('komponen_gaji.0.id_komponen_gaji', 630);
+
+        $this->assertDatabaseMissing('penggajian', ['id_anggota' => 37, 'id_komponen_gaji' => 631]);
+        $this->assertDatabaseHas('penggajian', ['id_anggota' => 37, 'id_komponen_gaji' => 630]);
     }
 
     private function seedAllowances(): void

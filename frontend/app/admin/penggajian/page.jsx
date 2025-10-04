@@ -37,6 +37,9 @@ export default function PenggajianPage() {
   const [komponenOptions, setKomponenOptions] = useState([]);
   const [detail, setDetail] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [formMode, setFormMode] = useState('create');
+  const [formLoading, setFormLoading] = useState(false);
+  const isUpdateMode = formMode === 'update';
 
   const authHeaders = useMemo(() => {
     if (typeof window === 'undefined') {
@@ -78,9 +81,14 @@ export default function PenggajianPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tokenChecked, perPage]);
 
-  const selectedAnggota = useMemo(() => (
-    anggotaOptions.find((option) => option.id_anggota === Number(formData.id_anggota)) ?? null
-  ), [anggotaOptions, formData.id_anggota]);
+  const selectedAnggota = useMemo(() => {
+    if (!formData.id_anggota) {
+      return null;
+    }
+
+    const numericId = Number(formData.id_anggota);
+    return anggotaOptions.find((option) => option.id_anggota === numericId) ?? null;
+  }, [anggotaOptions, formData.id_anggota]);
 
   const filteredKomponen = useMemo(() => {
     if (!selectedAnggota) {
@@ -148,33 +156,108 @@ export default function PenggajianPage() {
     }
   }
 
-  function handleAnggotaChange(event) {
+  async function loadFormForAnggota(rawId) {
+    const value = String(rawId ?? '');
     setFormErrors({});
+    setError('');
+
+    if (!value) {
+      setFormData(initialForm);
+      setFormMode('create');
+      return null;
+    }
+
+    setFormLoading(true);
     setFormData({
-      id_anggota: event.target.value,
+      id_anggota: value,
       komponen_gaji_ids: [],
     });
+    setFormMode('create');
+
+    if (!authHeaders) {
+      setFormLoading(false);
+      setFormMode('create');
+      return null;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/admin/penggajian/${value}`, { headers: authHeaders });
+
+      if (response.status === 404) {
+        setFormMode('create');
+        return null;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Gagal memuat penggajian anggota (${response.status}).`);
+      }
+
+      const json = await response.json();
+      const selectedIds = (json.komponen_gaji ?? []).map((item) => Number(item.id_komponen_gaji));
+
+      setFormData({
+        id_anggota: value,
+        komponen_gaji_ids: selectedIds,
+      });
+
+      setFormMode(selectedIds.length > 0 ? 'update' : 'create');
+      setDetail((prev) => (prev && prev.anggota?.id_anggota === Number(value) ? json : prev));
+
+      return json;
+    } catch (err) {
+      setError(err.message ?? 'Terjadi kesalahan saat memuat penggajian anggota.');
+      setFormMode('create');
+      return null;
+    } finally {
+      setFormLoading(false);
+    }
+  }
+
+  async function startEditing(anggotaId) {
+    await loadFormForAnggota(anggotaId);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function resetForm() {
+    setFormErrors({});
+    setFormMode('create');
+    setFormLoading(false);
+    setFormData(initialForm);
+  }
+
+  function handleAnggotaChange(event) {
+    const value = event.target.value;
+    setFormErrors({});
+
+    if (!value) {
+      setFormData(initialForm);
+      setFormMode('create');
+      return;
+    }
+
+    void loadFormForAnggota(value);
   }
 
   function handleKomponenToggle(id) {
     setFormErrors((prev) => ({ ...prev, komponen_gaji_ids: undefined }));
     setFormData((prev) => {
-      const exists = prev.komponen_gaji_ids.includes(id);
+      const numericId = Number(id);
+      const exists = prev.komponen_gaji_ids.includes(numericId);
       return {
         ...prev,
         komponen_gaji_ids: exists
-          ? prev.komponen_gaji_ids.filter((value) => value !== id)
-          : [...prev.komponen_gaji_ids, id],
+          ? prev.komponen_gaji_ids.filter((value) => value !== numericId)
+          : [...prev.komponen_gaji_ids, numericId],
       };
     });
   }
 
-  function validateForm() {
+  function validateForm(mode) {
     const errors = {};
     if (!formData.id_anggota) {
       errors.id_anggota = 'Pilih salah satu anggota terlebih dahulu.';
     }
-    if (!formData.komponen_gaji_ids.length) {
+    if (mode !== 'update' && formData.komponen_gaji_ids.length === 0) {
       errors.komponen_gaji_ids = 'Pilih minimal satu komponen gaji.';
     }
     return errors;
@@ -185,13 +268,14 @@ export default function PenggajianPage() {
     setError('');
     setFormErrors({});
 
-    const errors = validateForm();
+    const errors = validateForm(formMode);
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       return;
     }
 
     if (!authHeaders) return;
+    if (!formData.id_anggota) return;
 
     setIsSubmitting(true);
 
@@ -201,10 +285,17 @@ export default function PenggajianPage() {
         komponen_gaji_ids: formData.komponen_gaji_ids.map((value) => Number(value)),
       };
 
-      const response = await fetch(`${API_BASE_URL}/api/admin/penggajian`, {
-        method: 'POST',
+      const isUpdate = formMode === 'update';
+      const endpoint = isUpdate
+        ? `${API_BASE_URL}/api/admin/penggajian/${payload.id_anggota}`
+        : `${API_BASE_URL}/api/admin/penggajian`;
+
+      const response = await fetch(endpoint, {
+        method: isUpdate ? 'PUT' : 'POST',
         headers: authHeaders,
-        body: JSON.stringify(payload),
+        body: isUpdate
+          ? JSON.stringify({ komponen_gaji_ids: payload.komponen_gaji_ids })
+          : JSON.stringify(payload),
       });
 
       if (response.status === 422) {
@@ -220,10 +311,18 @@ export default function PenggajianPage() {
         throw new Error(`Gagal menyimpan data (${response.status}).`);
       }
 
-      const created = await response.json();
+      const result = await response.json();
       await loadData(meta?.current_page ?? 1);
-      setDetail(created);
-      setFormData(initialForm);
+      setDetail(result);
+
+      const nextIds = (result.komponen_gaji ?? []).map((item) => Number(item.id_komponen_gaji));
+
+      setFormData({
+        id_anggota: String(payload.id_anggota),
+        komponen_gaji_ids: nextIds,
+      });
+
+      setFormMode(nextIds.length > 0 ? 'update' : 'create');
     } catch (err) {
       setError(err.message ?? 'Terjadi kesalahan saat menyimpan data.');
     } finally {
@@ -336,7 +435,14 @@ export default function PenggajianPage() {
 
       <section className="admin__section admin__section--grid">
         <form className="form form--pane" onSubmit={handleSubmit}>
-          <h2 className="form__title">Tambah Komponen Penggajian</h2>
+          <h2 className="form__title">Ubah Penggajian Anggota</h2>
+          <p className="form__hint">
+            {formData.id_anggota
+              ? isUpdateMode
+                ? 'Centang atau hapus centang komponen untuk memperbarui penggajian. Kosongkan semuanya untuk menghapus seluruh komponen.'
+                : 'Pilih komponen gaji untuk menambahkan penggajian pertama bagi anggota ini.'
+              : 'Pilih anggota DPR untuk melihat dan menyusun komponen penggajiannya.'}
+          </p>
 
           <label className="form__label" htmlFor="anggota">
             Pilih Anggota
@@ -345,6 +451,7 @@ export default function PenggajianPage() {
               className="form__input"
               value={formData.id_anggota}
               onChange={handleAnggotaChange}
+              disabled={isSubmitting || formLoading}
             >
               <option value="">-- Pilih Anggota --</option>
               {anggotaOptions.map((option) => (
@@ -358,10 +465,13 @@ export default function PenggajianPage() {
 
           <fieldset className="form__fieldset">
             <legend className="form__legend">Komponen Gaji yang Tersedia</legend>
-            {!selectedAnggota && (
+            {formLoading && (
+              <p className="form__hint">Memuat penggajian anggota…</p>
+            )}
+            {!formLoading && !selectedAnggota && (
               <p className="form__hint">Pilih anggota untuk melihat daftar komponen yang sesuai jabatan.</p>
             )}
-            {selectedAnggota && filteredKomponen.length === 0 && (
+            {!formLoading && selectedAnggota && filteredKomponen.length === 0 && (
               <p className="form__hint">Belum ada komponen gaji yang cocok untuk jabatan ini.</p>
             )}
             <div className="form__checkbox-group">
@@ -369,8 +479,9 @@ export default function PenggajianPage() {
                 <label key={item.id_komponen_gaji} className="form__checkbox">
                   <input
                     type="checkbox"
-                    checked={formData.komponen_gaji_ids.includes(item.id_komponen_gaji)}
-                    onChange={() => handleKomponenToggle(item.id_komponen_gaji)}
+                    checked={formData.komponen_gaji_ids.includes(Number(item.id_komponen_gaji))}
+                    onChange={() => handleKomponenToggle(Number(item.id_komponen_gaji))}
+                    disabled={!selectedAnggota || formLoading || isSubmitting}
                   />
                   <span>
                     <strong>{item.nama_komponen}</strong>
@@ -387,9 +498,27 @@ export default function PenggajianPage() {
             )}
           </fieldset>
 
-          <button type="submit" className="button button--primary" disabled={isSubmitting}>
-            {isSubmitting ? 'Menyimpan…' : 'Simpan Penggajian'}
-          </button>
+          <div className="form__actions">
+            <button
+              type="submit"
+              className="button button--primary"
+              disabled={isSubmitting || formLoading || !formData.id_anggota}
+            >
+              {isSubmitting
+                ? 'Menyimpan…'
+                : isUpdateMode
+                  ? 'Simpan Perubahan'
+                  : 'Simpan Penggajian'}
+            </button>
+            <button
+              type="button"
+              className="button button--ghost"
+              onClick={resetForm}
+              disabled={isSubmitting || formLoading}
+            >
+              Reset Form
+            </button>
+          </div>
         </form>
 
         <div className="table-wrapper">
@@ -435,13 +564,22 @@ export default function PenggajianPage() {
                     <td>{formatCurrency(row.total_bulanan)}</td>
                     <td>{formatCurrency(row.take_home_pay)}</td>
                     <td>
-                      <button
-                        type="button"
-                        className="button button--ghost"
-                        onClick={() => fetchDetail(row.id_anggota)}
-                      >
-                        Lihat Detail
-                      </button>
+                      <div className="table-actions">
+                        <button
+                          type="button"
+                          className="button button--secondary"
+                          onClick={() => startEditing(row.id_anggota)}
+                        >
+                          Ubah
+                        </button>
+                        <button
+                          type="button"
+                          className="button button--ghost"
+                          onClick={() => fetchDetail(row.id_anggota)}
+                        >
+                          Lihat Detail
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
