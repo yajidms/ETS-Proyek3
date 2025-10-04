@@ -4,19 +4,13 @@ Frontend sederhana berbasis Next.js (JavaScript) yang fokus pada halaman login d
 
 ### Konfigurasi
 
-1. Salin file environment lalu sesuaikan URL backend Laravel:
-   ```powershell
-   copy .env.example .env
-   ```
-   Set `NEXT_PUBLIC_API_URL` pada `.env` ke alamat backend, misalnya `http://127.0.0.1:8000`.
-
-2. Pasang dependensi dan jalankan server pengembangan:
+1. Pasang dependensi dan jalankan server pengembangan:
    ```powershell
    npm install
    npm run dev
    ```
 
-3. Buka [http://localhost:3000](http://localhost:3000) untuk mengakses halaman login.
+2. Buka [http://localhost:3000](http://localhost:3000) untuk mengakses halaman login.
 
 ### Scripts Penting
 
