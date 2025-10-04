@@ -1,5 +1,13 @@
-# ETS Proyek – DATA DPR
+# ETS Proyek – APLIKASI PENGHITUNGAN & TRANSPARANSI GAJI DPR
 
+![TikusBerdasi](./docs/image.png)
+
+- Nama: Yazid Alrasyid
+- NIM: 241511093
+- Prodi: D3 - Teknik Informatika
+- Kelas: 2C
+
+## Mata Kuliah Proyek 3: Pengembangan Perangkat Lunak Berbasis Web
 Aplikasi internal untuk mengelola data anggota DPR beserta rincian komponen gaji. Proyek terdiri dari backend Laravel (JWT + PostgreSQL) dan frontend Next.js 15 (App Router) yang bekerja sebagai portal admin dan publik.
 
 ## Struktur Folder
