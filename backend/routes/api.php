@@ -4,10 +4,16 @@ use App\Http\Controllers\Admin\AnggotaController;
 use App\Http\Controllers\Admin\KomponenGajiController;
 use App\Http\Controllers\Admin\PenggajianController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PublicController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::prefix('public')->group(function () {
+    Route::get('anggota', [PublicController::class, 'daftarAnggota']);
+    Route::get('penggajian/{id}', [PublicController::class, 'dataPenggajian']);
+});
 
 Route::middleware(['jwt'])->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
